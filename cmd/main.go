@@ -18,10 +18,11 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"github.com/kube-queue/kube-queue/cmd/app/options"
 	app "github.com/kube-queue/kube-queue/cmd/app/server"
+	"k8s.io/component-base/logs"
+	"k8s.io/klog/v2"
 )
 
 func main() {
@@ -30,7 +31,10 @@ func main() {
 
 	flag.Parse()
 
+	logs.InitLogs()
+	defer logs.FlushLogs()
+
 	if err := app.Run(s); err != nil {
-		log.Fatalln(err)
+		klog.Fatal(err)
 	}
 }

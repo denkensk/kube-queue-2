@@ -1,0 +1,110 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: kube-queue-controller
+    kustomize.component: kube-queue-controller
+  name: kube-queue-controller
+  namespace: arena-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  labels:
+    app: kube-queue-controller
+    kustomize.component: kube-queue-controller
+  name: kube-queue-controller
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: kube-queue-controller
+    kustomize.component: kube-queue-controller
+  name: kube-queue-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-queue-controller
+subjects:
+  - kind: ServiceAccount
+    name: kube-queue-controller
+    namespace: arena-system
+---
+apiVersion: v1
+data:
+  kube-queue-extensions-config: |-
+    {
+        "tfjob": "unix:///sock/tf-job-bundle.sock"
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    kustomize.component: kube-queue
+  name: kube-queue-extensions-config
+  namespace: arena-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kustomize.component: kube-queue-controller
+  name: kube-queue-controller
+  namespace: arena-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      kustomize.component: kube-queue-controller
+  template:
+    metadata:
+      labels:
+        kustomize.component: kube-queue-controller
+        name: kube-queue-controller
+    spec:
+      containers:
+        - name: kube-queue-controller
+          image: registry.cn-hangzhou.aliyuncs.com/kubernetes-image-hub/kube-queue:1.3
+          imagePullPolicy: Always
+          command:
+            - /usr/bin/kube-queue
+            - --listen=unix:///sock/queue-controller.sock
+            - --extensions=/workspace/kube-queue-extensions-config
+          volumeMounts:
+#            - mountPath: /workspace/tf-job-bundle.sock
+#              name: tfjob
+#            - mountPath: /workspace/queue-controller.sock
+#              name: kubequeue
+            - mountPath: /sock
+              name: sock
+            - mountPath: /workspace
+              name: extensions-config-volume
+        - name: tf-operator-extension
+          image: registry.cn-hangzhou.aliyuncs.com/kubernetes-image-hub/tf-operator-extension:1.0
+          imagePullPolicy: Always
+          command:
+            - /usr/bin/tf-operator-extension
+            - --listen=unix:///sock/tf-job-bundle.sock
+            - --queue-addr=unix:///sock/queue-controller.sock
+          volumeMounts:
+#            - mountPath: /workspace/tf-job-bundle.sock
+#              name: tfjob
+#            - mountPath: /workspace/queue-controller.sock
+#              name: kubequeue
+            - mountPath: /sock
+              name: sock
+      serviceAccountName: kube-queue-controller
+      volumes:
+        - configMap:
+            name: kube-queue-extensions-config
+          name: extensions-config-volume
+        - name: sock
+          emptyDir: {}

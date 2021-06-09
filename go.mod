@@ -12,7 +12,7 @@ require (
 	github.com/kubeflow/tf-operator v0.5.3
 	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
-	github.com/sirupsen/logrus v1.6.0
+	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e // indirect
@@ -24,6 +24,7 @@ require (
 	k8s.io/apimachinery v0.16.9
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/code-generator v0.16.9
+	k8s.io/component-base v0.0.0-00010101000000-000000000000
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.4.0
 	k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf

@@ -5,13 +5,9 @@ import (
 	"os"
 	"time"
 
-	communicate "github.com/kube-queue/kube-queue/pkg/comm/queue"
-
 	"github.com/kube-queue/kube-queue/cmd/app/options"
-	extension "github.com/kube-queue/kube-queue/pkg/comm/extension"
 	"github.com/kube-queue/kube-queue/pkg/controller"
 	"github.com/kube-queue/kube-queue/pkg/permission"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -25,7 +21,8 @@ const (
 )
 
 func Run(opt *options.ServerOption) error {
-	log.Infof("%+v", apiVersion)
+	klog.Errorf("%+v", apiVersion)
+	klog.Infof("%+v", apiVersion)
 
 	stopCh := signals.SetupSignalHandler()
 
@@ -56,34 +53,13 @@ func Run(opt *options.ServerOption) error {
 	if err != nil {
 		return err
 	}
-	extClients := map[string]extension.ExtensionClientInterface{}
-	for jobType, addr := range typeAddr {
-		ec, err := extension.MakeExtensionClient(addr)
-		if err != nil {
-			return err
-		}
-		extClients[jobType] = ec
-	}
 
-	qController, err := controller.NewController(kubeClient, pc, extClients)
+	qController, err := controller.NewController(kubeClient, pc, opt.ListenTo, opt.KubeConfig, typeAddr)
 	if err != nil {
 		klog.Fatalln("Error building controller\n")
 	}
-
 	kubeInformerFactory.Start(stopCh)
-
-	// Setup the Server
-	server := communicate.MakeQueueServer(qController)
-
-	go func() {
-		if serverErr := communicate.StartServer(server, opt.ListenTo); serverErr != nil {
-			klog.Fatalln("server stopped!")
-		}
-	}()
-
-	if err = qController.Run(2, stopCh); err != nil {
-		klog.Fatalf("Error running controller: %s", err.Error())
-	}
+	qController.Start()
 
 	return nil
 }

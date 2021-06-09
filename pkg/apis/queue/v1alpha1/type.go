@@ -46,3 +46,22 @@ type Status struct {
 	Phase   JobPhase `json:"phase" protobuf:"bytes,1,name=phase"`
 	Message string   `json:"message,omitempty" protobuf:"bytes,2,opt,name=message"`
 }
+
+type Queue struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata" protobuf:"bytes,1,name=metadata"`
+	Spec              QueueSpec   `json:"queuespec" protobuf:"bytes,2,name=spec"`
+	Status            QueueStatus `json:"queuestatus,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+type QueueSpec struct {
+	QueueName string `json:"queuename" protobuf:"bytes,1,name=jobType"`
+	Priority  int32  `json:"priority,omitempty" protobuf:"varint,2,opt,name=priority"`
+}
+
+type QueueStatus struct {
+	Phase   QueuePhase `json:"phase" protobuf:"bytes,1,name=phase"`
+	Message string     `json:"message,omitempty" protobuf:"bytes,2,opt,name=message"`
+}
+
+type QueuePhase string
